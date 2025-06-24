@@ -157,8 +157,8 @@ REST_FRAMEWORK = {
 
 # Configuración de JWT
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=20),  # Duración del token de acceso
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=8),  # Duración del token de actualización
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),  # Duración del token de acceso
+    'REFRESH_TOKEN_LIFETIME': timedelta(hours=9),  # Duración del token de actualización
     'AUTH_HEADER_TYPES': ('Bearer',),  # Tipo de encabezado
     'USER_ID_FIELD': 'id',  # Campo de ID del usuario
     'USER_ID_CLAIM': 'user_id',  # Nombre del campo en el token
