@@ -6,12 +6,14 @@ from rest_framework_simplejwt.views import (
 from SMSA.views.token_views import CustomTokenObtainPairView
 from SMSA.views.user_views import UserViewSet
 from SMSA.views.facultad_views import FacultadViewSet
+from SMSA.views.estudiante_views import EstudianteViewSet
 
 
 router = routers.DefaultRouter()
 
 router.register('api/user', UserViewSet, 'user')
 router.register('api/facultad', FacultadViewSet, 'facultad')
+router.register('api/estudiante', EstudianteViewSet, 'estudiante')
 
 urlpatterns = [
     path('api/token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),

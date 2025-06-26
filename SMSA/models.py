@@ -30,6 +30,13 @@ class Facultad(models.Model):
     def __str__(self):
         return self.nombre
 
+class UnidadAcademica(models.Model):
+    nombre = models.CharField(max_length=100)
+    codigo = models.CharField(max_length=15, unique=True)
+    facultad = models.ForeignKey(Facultad, on_delete=models.PROTECT)
+
+    def __str__(self):
+        return self.nombre
 
 class PlanEstudio(models.Model):
     codigo = models.CharField(max_length=45, unique=True)
@@ -82,6 +89,7 @@ class Asignatura(models.Model):
     codigo = models.CharField(max_length=45, unique=True)
     nombre = models.CharField(max_length=150)
     creditos = models.IntegerField()
+    uab = models.ForeignKey(UnidadAcademica, on_delete=models.PROTECT, blank=True, null=True)
     fecha_creacion = models.DateTimeField(auto_now_add=True, blank=True, null=True)
     fecha_modificacion = models.DateTimeField(auto_now=True, blank=True, null=True)
 
