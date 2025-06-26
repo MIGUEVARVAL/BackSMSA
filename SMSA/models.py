@@ -42,6 +42,8 @@ class PlanEstudio(models.Model):
     codigo = models.CharField(max_length=45, unique=True)
     nombre = models.CharField(max_length=100)
     nivel = models.CharField(max_length=45)
+    tipo_nivel = models.CharField(max_length=45, blank=True, null=True)
+    activo = models.BooleanField(default=True)
     facultad = models.ForeignKey(Facultad, on_delete=models.PROTECT)
 
     def __str__(self):
