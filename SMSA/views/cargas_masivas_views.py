@@ -18,8 +18,19 @@ class CargasMasivasViewSet(viewsets.ViewSet):
             return Response({'detail': 'No se envió ningún archivo.'}, status=400)
         try:
             cargador = loadPlanesEstudio(archivo)
-            cargador.get_planes_estudio()
+            cargador.load_planes_estudio()
             return Response({'detail': 'Planes de estudio cargados exitosamente.'}, status=200)
         except Exception as e:
             return Response({'detail': str(e)}, status=500)
         
+    @action(detail=False, methods=['post'], url_path='parametrizacion-asignaturas')
+    def cargar_asignaturas(self, request):
+        archivo = request.FILES.get('file')
+        if not archivo:
+            return Response({'detail': 'No se envió ningún archivo.'}, status=400)
+        try:
+            cargador = loadAsignaturas(archivo)
+            cargador.load_asignaturas()
+            return Response({'detail': 'Asignaturas cargadas exitosamente.'}, status=200)
+        except Exception as e:
+            return Response({'detail': str(e)}, status=500)

@@ -22,7 +22,7 @@ class loadPlanesEstudio:
                 break
         return df
     
-    def get_planes_estudio(self):
+    def load_planes_estudio(self):
         try:
             # Filtrar las columnas relevantes
             df_planes_estudio = self.df_planes_estudio[['COD_PLAN', 'DESC_PLAN', 'NIVEL', 'TIPO_NIVEL', 'PLAN_ACTIVO', 'COD_FACULTAD', 'FACULTAD']].copy()

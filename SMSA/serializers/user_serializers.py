@@ -7,7 +7,7 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = '__all__'
         #Campos de solo lectura
-        read_only_fields = ('id', 'date_joined', 'last_login', 'is_active', 'is_staff', 'is_superuser')
+        read_only_fields = ('id', 'date_joined', 'last_login', 'is_active', 'is_staff', 'is_superuser',)
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):

@@ -103,6 +103,7 @@ class AsignaturaPlan(models.Model):
     tipologia = models.ForeignKey(Tipologia, on_delete=models.PROTECT)
     asignatura = models.ForeignKey(Asignatura, on_delete=models.CASCADE)
     plan_estudio = models.ForeignKey(PlanEstudio, on_delete=models.CASCADE)
+    fecha_modificacion = models.DateTimeField(auto_now=True, blank=True, null=True)
 
     def __str__(self):
         return f"{self.asignatura.nombre} - {self.plan_estudio.nombre} ({self.tipologia.nombre})"
