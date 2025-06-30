@@ -23,6 +23,7 @@ class AsignaturaPlanViewSet(viewsets.ModelViewSet):
         if plan_estudio_id is not None:
             queryset = queryset.filter(plan_estudio__id=plan_estudio_id)
         if tipologia_id is not None:
-            queryset = queryset.filter(tipologia__id=tipologia_id)        
+            queryset = queryset.filter(tipologia__id=tipologia_id)
+             
 
         return queryset

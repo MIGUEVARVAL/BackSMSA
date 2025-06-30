@@ -43,9 +43,10 @@ class PlanEstudioViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(facultad__id=facultad_id)
         if order_by is not None:
             if order_direction == 'DESC':
-                queryset = queryset.order_by(f'-{order_by}')
+                queryset = queryset.order_by(f'-{order_by}','-activo', '-tipo_nivel', 'nombre')
             else:
-                queryset = queryset.order_by(order_by)
-
+                queryset = queryset.order_by(order_by,'-activo', '-tipo_nivel', 'nombre')
+        else:
+            queryset = queryset.order_by('-activo', '-tipo_nivel', 'nombre')
 
         return queryset

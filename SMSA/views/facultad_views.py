@@ -27,5 +27,7 @@ class FacultadViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(codigo__startswith=codigo)
         if nombre is not None:
             queryset = queryset.filter(nombre__icontains=nombre)   
+
+        queryset = queryset.order_by('codigo')
             
         return queryset

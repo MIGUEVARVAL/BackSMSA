@@ -50,4 +50,6 @@ class UserViewSet(viewsets.ModelViewSet):
         if nivel_permisos_gt is not None:
             queryset = queryset.filter(nivel_permisos__gt=nivel_permisos_gt)
 
+        queryset = queryset.order_by('-date_joined')
+
         return queryset

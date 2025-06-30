@@ -45,6 +45,7 @@ class PlanEstudio(models.Model):
     tipo_nivel = models.CharField(max_length=45, blank=True, null=True)
     activo = models.BooleanField(default=True)
     facultad = models.ForeignKey(Facultad, on_delete=models.PROTECT)
+    descripcion = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return self.nombre
@@ -55,7 +56,8 @@ class Estudiante(models.Model):
     subacceso = models.CharField(max_length=45, blank=True, null=True)
     tipo_documento = models.CharField(max_length=45, blank=True, null=True)
     documento = models.CharField(max_length=15, unique=True)
-    nombre = models.CharField(max_length=100)
+    nombres = models.CharField(max_length=100, blank=True, null=True)
+    apellidos = models.CharField(max_length=100, blank=True, null=True)
     puntaje_admision = models.FloatField(blank=True, null=True)
     pbm = models.IntegerField(blank=True, null=True)
     apertura = models.CharField(max_length=20, blank=True, null=True)
@@ -78,6 +80,7 @@ class Estudiante(models.Model):
     cupo_creditos = models.IntegerField(default=0, blank=True, null=True)
     creditos_pendientes = models.IntegerField(default=0, blank=True, null=True)
     creditos_disponibles = models.IntegerField(default=0, blank=True, null=True)
+    estudiante_riesgo = models.BooleanField(default=False, blank=True, null=True)
     
 
 
@@ -96,6 +99,7 @@ class Asignatura(models.Model):
     uab = models.ForeignKey(UnidadAcademica, on_delete=models.PROTECT, blank=True, null=True)
     fecha_creacion = models.DateTimeField(auto_now_add=True, blank=True, null=True)
     fecha_modificacion = models.DateTimeField(auto_now=True, blank=True, null=True)
+    descripcion = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return self.nombre

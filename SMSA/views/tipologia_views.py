@@ -31,5 +31,7 @@ class TipologiaViewSet(viewsets.ModelViewSet):
                 queryset = queryset.order_by(f'-{order_by}')
             else:
                 queryset = queryset.order_by(order_by)
+        else:
+            queryset = queryset.order_by('-nombre', 'codigo')
 
         return queryset

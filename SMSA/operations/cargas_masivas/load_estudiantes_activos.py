@@ -30,12 +30,11 @@ class loadEstudiantesActivos:
         """
         df = self.df_estudiantes_activos.copy()
 
-        print(df.columns)
         
         # Validar columnas requeridas
         required_columns = [
             'ACCESO', 'SUBACCESO', 'T_DOCUMENTO', 'DOCUMENTO',
-            'NOMBRE_LEGAL', 'PUNTAJE_ADMISION',
+            'NOMBRES_LEGAL', 'APELLIDO1_LEGAL', 'APELLIDO2_LEGAL', 'PUNTAJE_ADMISION',
             'PBM_CALCULADO', 'APERTURA', 'CONVOCATORIA', 'GENERO',
             'FECHA_NACIMIENTO', 'USUARIO', 'CORREO_PERSONAL',
             'TELEFONO1', 'PAPA', 'AVANCE_CARRERA', 'NUMERO_MATRICULAS',
@@ -54,14 +53,15 @@ class loadEstudiantesActivos:
                 subacceso = row['SUBACCESO']
                 tipo_documento = row['T_DOCUMENTO']
                 documento = row['DOCUMENTO']
-                nombre = row['NOMBRE_LEGAL']
+                nombres = row['NOMBRES_LEGAL']
+                apellidos =  row['APELLIDO1_LEGAL'] + ' ' + row['APELLIDO2_LEGAL'] if pd.notna(row['APELLIDO2_LEGAL']) else row['APELLIDO1_LEGAL']
                 puntaje_admision = row['PUNTAJE_ADMISION']
                 pbm = row['PBM_CALCULADO']
                 apertura = row['APERTURA']
                 convocatoria = row['CONVOCATORIA']
                 genero = row['GENERO']
                 fecha_nacimiento = row['FECHA_NACIMIENTO']
-                correo_institucional = row['USUARIO']
+                correo_institucional = row['USUARIO']+'@unal.edu.co'
                 correo_alterno = row['CORREO_PERSONAL']
                 telefono = row['TELEFONO1']
                 papa = row['PAPA']
@@ -77,7 +77,8 @@ class loadEstudiantesActivos:
                 if pd.notna(acceso): defaults['acceso'] = acceso
                 if pd.notna(subacceso): defaults['subacceso'] = subacceso
                 if pd.notna(tipo_documento): defaults['tipo_documento'] = tipo_documento
-                if pd.notna(nombre): defaults['nombre'] = nombre
+                if pd.notna(nombres): defaults['nombres'] = str(nombres).upper()
+                if pd.notna(apellidos): defaults['apellidos'] = str(apellidos).upper()
                 if pd.notna(puntaje_admision): defaults['puntaje_admision'] = puntaje_admision
                 if pd.notna(pbm): defaults['pbm'] = int(pbm)
                 if pd.notna(apertura): defaults['apertura'] = apertura
@@ -120,6 +121,6 @@ class loadEstudiantesActivos:
                         raise ValueError(f'El plan de estudio {plan_estudio_codigo} no existe.')
 
                 estudiante.save()
-                print('Estudiante cargado:', estudiante.nombre)
+                print('Estudiante cargado:', estudiante.nombres, estudiante.apellidos)
 
         return estudiantes_cargados
