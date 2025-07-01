@@ -6,7 +6,7 @@ class loadEstudiantesRiesgo:
     def __init__(self, archivo):
         # archivo: archivo recibido desde el frontend (request.FILES['archivo'])
         # Hoja donde se encuentran las relaciones entre materia, plan y tipología
-        self.df_estudiantes_riesgo = self.read_excel(archivo, sheet_name=0)
+        self.df_estudiantes_riesgo = self.read_excel(archivo, sheet_name=1)
 
 
     @staticmethod
@@ -34,11 +34,11 @@ class loadEstudiantesRiesgo:
         # Validar columnas requeridas
         required_columns = [
             "FACULTAD", "CÓDIGO DEL PLAN", "PLAN DE ESTUDIOS", "ACCESO",
-            "SUBACCESO", "TIPO DE DOCUMENTO", "DOCUMENTO", "NOMBRE_LEGAL_ESTUDIANTE", "APELLIDOS_LEGAL_ESTUDIANTE",
+            "SUBACCESO", "TIPO DE DOCUMENTO", "DOCUMENTO", "NOMBRE LEGAL ESTUDIANTE", "APELLIDO LEGAL ESTUDIANTE",
             "PUNTAJE DE ADMISIÓN", "PBM", "APERTURA", "GENERO", "CORREO INSTITUCIONAL",
             "CORREO ALTERNATIVO", "TELÉFONO", "PAPA", "AVANCE DE CARRERA",
             "NÚMERO DE MATRÍCULAS", "SEMESTRES CANCELADOS", "RESERVAS DE CUPO", "MATRÍCULA EN EL PERIODO ACTIVO",
-            "CUPO DE CRÉDITOS", "CRÉDITOS PENDIENTES", "CRÉDITOS DISPONIBLES"
+            "CUPO CRÉDITOS", "CRÉDITOS PENDIENTES", "CRÉDITOS DISPONIBLES"
         ]
         
         for col in required_columns:
@@ -57,8 +57,8 @@ class loadEstudiantesRiesgo:
                 subacceso = row["SUBACCESO"]
                 tipo_documento = row["TIPO DE DOCUMENTO"]
                 documento = row["DOCUMENTO"]
-                nombres = row["NOMBRE_LEGAL_ESTUDIANTE"]
-                apellidos = row["APELLIDOS_LEGAL_ESTUDIANTE"]
+                nombres = row["NOMBRE LEGAL ESTUDIANTE"]
+                apellidos = row["APELLIDO LEGAL ESTUDIANTE"]
                 puntaje_admision = row["PUNTAJE DE ADMISIÓN"]
                 pbm = row["PBM"]
                 apertura = row["APERTURA"]
@@ -72,7 +72,7 @@ class loadEstudiantesRiesgo:
                 semestres_cancelados = row["SEMESTRES CANCELADOS"]
                 reservas_cupo = row["RESERVAS DE CUPO"]
                 matricula_periodo_activo = row["MATRÍCULA EN EL PERIODO ACTIVO"]
-                cupo_creditos = row["CUPO DE CRÉDITOS"]
+                cupo_creditos = row["CUPO CRÉDITOS"]
                 creditos_pendientes = row["CRÉDITOS PENDIENTES"]
                 creditos_disponibles = row["CRÉDITOS DISPONIBLES"]
 
@@ -83,7 +83,7 @@ class loadEstudiantesRiesgo:
                 if pd.notna(tipo_documento): defaults['tipo_documento'] = tipo_documento
                 if pd.notna(nombres): defaults['nombres'] = str(nombres).upper()
                 if pd.notna(apellidos): defaults['apellidos'] = str(apellidos).upper()
-                if pd.notna(puntaje_admision): defaults['puntaje_admision'] = puntaje_admision
+                if pd.notna(puntaje_admision): defaults['puntaje_admision'] = float(puntaje_admision)
                 if pd.notna(pbm): defaults['pbm'] = int(pbm)
                 if pd.notna(apertura): defaults['apertura'] = apertura
                 if pd.notna(genero): defaults['genero'] = genero
@@ -99,7 +99,6 @@ class loadEstudiantesRiesgo:
                 if pd.notna(cupo_creditos): defaults['cupo_creditos'] = int(cupo_creditos)
                 if pd.notna(creditos_pendientes): defaults['creditos_pendientes'] = int(creditos_pendientes)    
                 if pd.notna(creditos_disponibles): defaults['creditos_disponibles'] = int(creditos_disponibles)
-                defaults['estudiante_riesgo'] = True  # Asignar por defecto a True
 
                 # Verificar si el estudiante ya existe
                 estudiante = Estudiante.objects.filter(documento=documento).first()

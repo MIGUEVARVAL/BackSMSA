@@ -25,41 +25,18 @@ class loadNotasFinales:
         # Filtrar las columnas relevantes
         df_notas_finales = self.df_notas_finales[[
             'PERIODO', 'COD_PLAN', 'DOCUMENTO', 'COD_ASIGNATURA', 'ASIGNATURA',
-            'COD_TIPOLOGIA', 'TIPOLOGIA', 'CREDITOS_ASIGNATURA', 'COD_UAB_ASIGNATURA',
+            'CREDITOS_ASIGNATURA', 'COD_UAB_ASIGNATURA',
             'CALIFICACION_ALFABETICA', 'CALIFICACION_NUMERICA', 'VECES_VISTA'
             ]].copy()
         
-        # Crear una lista para las tipologías únicas
-        tipologias_unicas = df_notas_finales[['COD_TIPOLOGIA', 'TIPOLOGIA']].drop_duplicates().to_dict(orient='records')
-        # Crear o actualizar las tipologías en la base de datos
-        tipologias_objs = self.create_tipologias(tipologias_unicas)
-        tipologias_dict = {t.codigo: t for t in tipologias_objs}
         # Crear una lista para los estudiantes únicos
         planes_dict = self.get_planes_estudio()
         # Crear una lista para las UAB
         uab_dict = self.get_uab()
 
         # Crear o actualizar las asignaturas y sus notas finales
-        self.create_update_historial_academico(df_notas_finales.to_dict(orient='records'), uab_dict, tipologias_dict, planes_dict)
+        self.create_update_historial_academico(df_notas_finales.to_dict(orient='records'), uab_dict, planes_dict)
     
-
-    # Función para crear o actualizar las tipologías
-    def create_tipologias(self, tipologias):
-        tipologias_objs = []
-        with transaction.atomic():
-            for tipologia in tipologias:
-                obj = Tipologia.objects.filter(
-                    codigo=tipologia['COD_TIPOLOGIA'],
-                    nombre=tipologia['TIPOLOGIA']
-                ).first()
-                if not obj:
-                    obj = Tipologia.objects.create(
-                        codigo=tipologia['COD_TIPOLOGIA'],
-                        nombre=tipologia['TIPOLOGIA']
-                    )
-                    print(f'Tipología creada: {obj}')
-                tipologias_objs.append(obj)
-        return tipologias_objs
     
     # Función para extraer los planes de estudio
     def get_planes_estudio(self):
@@ -74,7 +51,7 @@ class loadNotasFinales:
         return uab_dict
 
     # Función parta crear o actualizar las asignaturas y sus notas finales
-    def create_update_historial_academico(self, notas_finales, uab_dict, tipologias_dict, planes_dict):
+    def create_update_historial_academico(self, notas_finales, uab_dict, planes_dict):
         # Se consulta al estudiante por su documento
         for nota in notas_finales:
             estudiante = Estudiante.objects.filter(documento=nota['DOCUMENTO']).first()
@@ -105,16 +82,6 @@ class loadNotasFinales:
                 }
             )
 
-            #Asociar la asignatura al plan de estudio y tipología
-            asignatura_plan, created = AsignaturaPlan.objects.get_or_create(
-                asignatura=asignatura,
-                plan_estudio=plan_estudio,
-                tipologia=tipologias_dict.get(nota['COD_TIPOLOGIA']),
-                defaults={
-                    'parametrizacion': False
-                }
-            )
-            
             # Se crea o actualiza el historial académico
             defaults = {
                 'estado': nota['CALIFICACION_ALFABETICA'],

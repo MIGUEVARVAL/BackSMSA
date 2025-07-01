@@ -30,7 +30,7 @@ class loadAsignaturas:
         df_asignaturas = self.df_asignaturas[['COD_FACULTAD', 'FACULTAD', 'COD_UAB', 'UAB', 'COD_ASIGNATURA', 'ASIGNATURA', 'CREDITOS', 'PERIODO']].copy()
         # Normalizar el valor de la columna TIPOLOGIA
         df_asignaturas_plan.loc[df_asignaturas_plan['TIPOLOGIA'] == 'FUND. OPTATIVA', 'TIPOLOGIA'] = 'FUNDAMENTACIÓN OPTATIVA'
-        df_asignaturas_plan.loc[df_asignaturas_plan['TIPOLOGIA'] == 'FUND. OPTATIVA', 'OBLIGATORIA'] = 'FUNDAMENTACIÓN OBLIGATORIA'
+        df_asignaturas_plan.loc[df_asignaturas_plan['TIPOLOGIA'] == 'FUND. OBLIGATORIA', 'TIPOLOGIA'] = 'FUNDAMENTACIÓN OBLIGATORIA'
         # Crear una lista para las tipologías únicas
         tipologias_unicas = df_asignaturas_plan[['COD_TIPOLOGIA', 'TIPOLOGIA']].drop_duplicates().to_dict(orient='records')
         # Crear o actualizar las tipologías en la base de datos

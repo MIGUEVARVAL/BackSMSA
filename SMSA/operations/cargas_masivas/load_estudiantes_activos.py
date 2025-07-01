@@ -48,79 +48,90 @@ class loadEstudiantesActivos:
         
 
         with transaction.atomic():
-            for index, row in df.iterrows():
-                acceso = row['ACCESO']
-                subacceso = row['SUBACCESO']
-                tipo_documento = row['T_DOCUMENTO']
-                documento = row['DOCUMENTO']
-                nombres = row['NOMBRES_LEGAL']
-                apellidos =  row['APELLIDO1_LEGAL'] + ' ' + row['APELLIDO2_LEGAL'] if pd.notna(row['APELLIDO2_LEGAL']) else row['APELLIDO1_LEGAL']
-                puntaje_admision = row['PUNTAJE_ADMISION']
-                pbm = row['PBM_CALCULADO']
-                apertura = row['APERTURA']
-                convocatoria = row['CONVOCATORIA']
-                genero = row['GENERO']
-                fecha_nacimiento = row['FECHA_NACIMIENTO']
-                correo_institucional = row['USUARIO']+'@unal.edu.co'
-                correo_alterno = row['CORREO_PERSONAL']
-                telefono = row['TELEFONO1']
-                papa = row['PAPA']
-                avance_carrera = row['AVANCE_CARRERA']
-                numero_matriculas = row['NUMERO_MATRICULAS']
-                victima_conflicto = row['VICTIMAS_DEL_CONFLICTO']
-                discapacidad = row['DISCAPACIDAD']
-                plan_estudio_codigo = row['COD_PLAN']
+            try:
+                for index, row in df.iterrows():
+                    acceso = row['ACCESO']
+                    subacceso = row['SUBACCESO']
+                    tipo_documento = row['T_DOCUMENTO']
+                    documento = row['DOCUMENTO']
+                    nombres = row['NOMBRES_LEGAL']
+                    apellido1 = str(row['APELLIDO1_LEGAL']) if pd.notna(row['APELLIDO1_LEGAL']) else ''
+                    apellido2 = str(row['APELLIDO2_LEGAL']) if pd.notna(row['APELLIDO2_LEGAL']) else ''
+                    apellidos = (apellido1 + ' ' + apellido2).strip() if apellido2 else apellido1
+                    puntaje_admision = row['PUNTAJE_ADMISION']
+                    pbm = row['PBM_CALCULADO']
+                    apertura = row['APERTURA']
+                    convocatoria = row['CONVOCATORIA']
+                    genero = row['GENERO']
+                    fecha_nacimiento = row['FECHA_NACIMIENTO']
+                    correo_institucional = row['USUARIO']
+                    correo_alterno = row['CORREO_PERSONAL']
+                    telefono = row['TELEFONO1']
+                    papa = row['PAPA']
+                    avance_carrera = row['AVANCE_CARRERA']
+                    numero_matriculas = row['NUMERO_MATRICULAS']
+                    victima_conflicto = row['VICTIMAS_DEL_CONFLICTO']
+                    discapacidad = row['DISCAPACIDAD']
+                    plan_estudio_codigo = row['COD_PLAN']
 
-                # Verificar si el estudiante ya existe
-                # Construir los valores por defecto solo si no son nulos
-                defaults = {}
-                if pd.notna(acceso): defaults['acceso'] = acceso
-                if pd.notna(subacceso): defaults['subacceso'] = subacceso
-                if pd.notna(tipo_documento): defaults['tipo_documento'] = tipo_documento
-                if pd.notna(nombres): defaults['nombres'] = str(nombres).upper()
-                if pd.notna(apellidos): defaults['apellidos'] = str(apellidos).upper()
-                if pd.notna(puntaje_admision): defaults['puntaje_admision'] = puntaje_admision
-                if pd.notna(pbm): defaults['pbm'] = int(pbm)
-                if pd.notna(apertura): defaults['apertura'] = apertura
-                if pd.notna(convocatoria): defaults['convocatoria'] = convocatoria
-                if pd.notna(genero): defaults['genero'] = genero
-                if pd.notna(fecha_nacimiento): defaults['fecha_nacimiento'] = fecha_nacimiento
-                if pd.notna(correo_institucional): defaults['correo_institucional'] = correo_institucional
-                if pd.notna(correo_alterno): defaults['correo_alterno'] = correo_alterno
-                if pd.notna(telefono): defaults['telefono'] = telefono
-                if pd.notna(papa): defaults['papa'] = float(papa)
-                if pd.notna(avance_carrera): defaults['avance_carrera'] = float(avance_carrera)
-                if pd.notna(numero_matriculas): defaults['numero_matriculas'] = int(numero_matriculas)
-                if pd.notna(victima_conflicto): defaults['victima_conflicto'] = victima_conflicto
-                if pd.notna(discapacidad): defaults['discapacidad'] = discapacidad
+                    # Verificar si el estudiante ya existe
+                    # Construir los valores por defecto solo si no son nulos
+                    defaults = {}
+                    if pd.notna(acceso): defaults['acceso'] = acceso
+                    if pd.notna(subacceso): defaults['subacceso'] = subacceso
+                    if pd.notna(tipo_documento): defaults['tipo_documento'] = tipo_documento
+                    if pd.notna(nombres): defaults['nombres'] = str(nombres).upper()
+                    if pd.notna(apellidos): defaults['apellidos'] = str(apellidos).upper()
+                    if pd.notna(puntaje_admision): defaults['puntaje_admision'] = float(puntaje_admision)
+                    if pd.notna(pbm): defaults['pbm'] = int(pbm)
+                    if pd.notna(apertura): defaults['apertura'] = apertura
+                    if pd.notna(convocatoria): defaults['convocatoria'] = convocatoria
+                    if pd.notna(genero): defaults['genero'] = genero
+                    if pd.notna(fecha_nacimiento): defaults['fecha_nacimiento'] = fecha_nacimiento
+                    if pd.notna(correo_institucional): defaults['correo_institucional'] = str(correo_institucional) + '@unal.edu.co'
+                    if pd.notna(correo_alterno): defaults['correo_alterno'] = correo_alterno
+                    if pd.notna(telefono): defaults['telefono'] = telefono
+                    if pd.notna(papa): defaults['papa'] = float(papa)
+                    if pd.notna(avance_carrera): defaults['avance_carrera'] = float(avance_carrera)
+                    if pd.notna(numero_matriculas): defaults['numero_matriculas'] = int(numero_matriculas)
+                    if pd.notna(victima_conflicto): defaults['victima_conflicto'] = victima_conflicto
+                    if pd.notna(discapacidad): defaults['discapacidad'] = discapacidad
 
-                estudiante, created = Estudiante.objects.get_or_create(
-                    documento=documento,
-                    defaults=defaults
-                )
+                    estudiante, created = Estudiante.objects.get_or_create(
+                        documento=documento,
+                        defaults=defaults
+                    )
 
-                if created:
-                    estudiantes_cargados += 1
-                else:
-                    # Validar si hubo alguna modificación
-                    campos_actualizables = defaults
-                    modificado = False
-                    for campo, valor in campos_actualizables.items():
-                        if getattr(estudiante, campo) != valor:
-                            setattr(estudiante, campo, valor)
-                            modificado = True
-                    if not modificado:
-                        continue  # No hubo cambios, pasar al siguiente estudiante
+                    if created:
+                        estudiantes_cargados += 1
+                    else:
+                        # Validar si hubo alguna modificación
+                        campos_actualizables = defaults
+                        modificado = False
+                        for campo, valor in campos_actualizables.items():
+                            if getattr(estudiante, campo) != valor:
+                                setattr(estudiante, campo, valor)
+                                modificado = True
+                        if not modificado:
+                            continue  # No hubo cambios, pasar al siguiente estudiante
 
-                # Asignar plan de estudio si se proporciona (para nuevos)
-                if created and pd.notna(plan_estudio_codigo):
-                    try:
-                        plan_estudio = PlanEstudio.objects.get(codigo=plan_estudio_codigo)
-                        estudiante.plan_estudio = plan_estudio
-                    except PlanEstudio.DoesNotExist:
-                        raise ValueError(f'El plan de estudio {plan_estudio_codigo} no existe.')
+                    # Asignar plan de estudio si se proporciona (para nuevos)
+                    if created and pd.notna(plan_estudio_codigo):
+                        try:
+                            plan_estudio = PlanEstudio.objects.get(codigo=plan_estudio_codigo)
+                            estudiante.plan_estudio = plan_estudio
+                        except PlanEstudio.DoesNotExist:
+                            raise ValueError(f'El plan de estudio {plan_estudio_codigo} no existe.')
 
-                estudiante.save()
-                print('Estudiante cargado:', estudiante.nombres, estudiante.apellidos)
-
+                    estudiante.save()
+                    print('Estudiante cargado:', estudiante.nombres, estudiante.apellidos)
+            except Exception as e:
+                print(f'Error al cargar el estudiante {documento}: {e}')
+                # Imprime los valores de la fila problemática
+                print("Valores de la fila con error:")
+                for col in df.columns:
+                    print(f"{col}: {row[col]}")
+                # Opcional: imprime el índice de la fila
+                print(f"Índice de la fila: {index}")
+                # Si ocurre un error
         return estudiantes_cargados
