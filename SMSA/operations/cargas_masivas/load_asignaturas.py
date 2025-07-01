@@ -26,30 +26,37 @@ class loadAsignaturas:
     
     def load_asignaturas(self):
         # Filtrar las columnas relevantes
-        df_asignaturas_plan = self.df_asignaturas_plan[['COD_ASIGNATURA', 'COD_PLAN', 'COD_TIPOLOGIA', 'TIPOLOGIA']].copy()
-        df_asignaturas = self.df_asignaturas[['COD_FACULTAD', 'FACULTAD', 'COD_UAB', 'UAB', 'COD_ASIGNATURA', 'ASIGNATURA', 'CREDITOS']].copy()
+        df_asignaturas_plan = self.df_asignaturas_plan[['COD_ASIGNATURA', 'COD_PLAN', 'COD_TIPOLOGIA', 'TIPOLOGIA', 'PERIDO DE OFERTA']].copy()
+        df_asignaturas = self.df_asignaturas[['COD_FACULTAD', 'FACULTAD', 'COD_UAB', 'UAB', 'COD_ASIGNATURA', 'ASIGNATURA', 'CREDITOS', 'PERIODO']].copy()
+        # Normalizar el valor de la columna TIPOLOGIA
+        df_asignaturas_plan.loc[df_asignaturas_plan['TIPOLOGIA'] == 'FUND. OPTATIVA', 'TIPOLOGIA'] = 'FUNDAMENTACIÓN OPTATIVA'
+        df_asignaturas_plan.loc[df_asignaturas_plan['TIPOLOGIA'] == 'FUND. OPTATIVA', 'OBLIGATORIA'] = 'FUNDAMENTACIÓN OBLIGATORIA'
         # Crear una lista para las tipologías únicas
         tipologias_unicas = df_asignaturas_plan[['COD_TIPOLOGIA', 'TIPOLOGIA']].drop_duplicates().to_dict(orient='records')
         # Crear o actualizar las tipologías en la base de datos
-        tipologias_objs = self.create_update_tipologias(tipologias_unicas)
+        tipologias_objs = self.create_tipologias(tipologias_unicas)
+        tipologias_dict = {t.codigo: t for t in tipologias_objs}
         # Crear una lista para las facultades únicas
         facultades_unicas = df_asignaturas[['COD_FACULTAD', 'FACULTAD']].drop_duplicates().to_dict(orient='records')
         # Crear o actualizar las facultades en la base de datos
         facultades_objs = self.create_update_facultades(facultades_unicas)
+        facultades_dict = {f.codigo: f for f in facultades_objs}
         # Crear una lista para las UAB
         uab_unicas = df_asignaturas[['COD_FACULTAD', 'COD_UAB', 'UAB']].drop_duplicates().to_dict(orient='records')
         # Crear o actualizar las UAB en la base de datos
-        uab_objs = self.create_update_uab(uab_unicas, facultades_objs)
+        uab_objs = self.create_update_uab(uab_unicas, facultades_dict)
+        uab_dict = {u.codigo: u for u in uab_objs}
         # Crear una lista para los planes de estudio
         planes_objs = self.get_planes_estudio()
+        planes_dict = {p.codigo: p for p in planes_objs}
         # Crear una lista para las asignaturas
-        asignaturas_unicas = df_asignaturas[['COD_ASIGNATURA', 'ASIGNATURA', 'COD_UAB', 'CREDITOS']].drop_duplicates().to_dict(orient='records')
+        asignaturas_unicas = df_asignaturas[['COD_ASIGNATURA', 'ASIGNATURA', 'COD_UAB', 'CREDITOS', 'PERIODO']].drop_duplicates().to_dict(orient='records')
         df_asignaturas_plan_unicas = df_asignaturas_plan.drop_duplicates(subset=['COD_ASIGNATURA', 'COD_PLAN', 'COD_TIPOLOGIA', 'TIPOLOGIA']).copy()
         # Crear o actualizar las asignaturas en la base de datos
-        asignaturas_objs = self.create_update_asignaturas_plan(asignaturas_unicas, uab_objs, tipologias_objs, planes_objs, df_asignaturas_plan_unicas)
+        asignaturas_objs = self.create_update_asignaturas_plan(asignaturas_unicas, uab_dict, tipologias_dict, planes_dict, df_asignaturas_plan_unicas)
 
     # Función para crear o actualizar las tipologías
-    def create_update_tipologias(self, tipologias):
+    def create_tipologias(self, tipologias):
         tipologias_objs = []
         with transaction.atomic():
             for tipologia in tipologias:
@@ -57,20 +64,16 @@ class loadAsignaturas:
                     codigo=tipologia['COD_TIPOLOGIA'],
                     nombre=tipologia['TIPOLOGIA']
                 ).first()
-                if obj:
-                    if obj.nombre != tipologia['TIPOLOGIA']:
-                        obj.nombre = tipologia['TIPOLOGIA']
-                        obj.save()
-                        print(f'Tipología actualizada: {obj}')
-                    else:
-                        print(f'Tipología sin cambios: {obj}')
-                else:
+                if not obj:
                     obj = Tipologia.objects.create(
                         codigo=tipologia['COD_TIPOLOGIA'],
                         nombre=tipologia['TIPOLOGIA']
                     )
                     print(f'Tipología creada: {obj}')
                 tipologias_objs.append(obj)
+        print("Tipologías procesadas:")
+        for t in tipologias_objs:
+            print(f"- {t.codigo}: {t.nombre}")
         return tipologias_objs
     
     # Función para crear o actualizar las facultades
@@ -96,11 +99,11 @@ class loadAsignaturas:
         return facultades_objs
     
     # Función para crear o actualizar las uab
-    def create_update_uab(self, df_uab, facultades_objs):
+    def create_update_uab(self, df_uab, facultades_dict):
         uab_objs = []
         with transaction.atomic():
             for uab in df_uab:
-                facultad_obj = next((f for f in facultades_objs if f.codigo == uab['COD_FACULTAD']), None)
+                facultad_obj = facultades_dict.get(uab['COD_FACULTAD'])
                 if not facultad_obj:
                     print(f'Facultad no encontrada para la UAB: {uab["UAB"]}')
                     continue
@@ -124,18 +127,19 @@ class loadAsignaturas:
         return uab_objs
     
     # Función para crear o actualizar las asignaturas
-    def create_update_asignaturas_plan(self, df_asignaturas, uab_objs, tipologias_objs, planes_objs, df_asignaturas_plan):
+    def create_update_asignaturas_plan(self, asignaturas_unicas, uab_dict, tipologias_dict, planes_dict, df_asignaturas_plan_unicas):
         asignaturas_objs = []
         with transaction.atomic():
-            for asignatura in df_asignaturas:
-                uab_obj = next((u for u in uab_objs if u.codigo == asignatura['COD_UAB']), None)
+            for asignatura in asignaturas_unicas:
+                uab_obj = uab_dict.get(asignatura['COD_UAB'])
                 if not uab_obj:
                     print(f'UAB no encontrada para la asignatura: {asignatura["ASIGNATURA"]}')
                     continue
                 obj = Asignatura.objects.filter(codigo=asignatura['COD_ASIGNATURA']).first()
                 if obj:
-                    if obj.nombre != asignatura['ASIGNATURA'] or obj.uab != uab_obj:
+                    if obj.nombre != asignatura['ASIGNATURA'] or obj.uab != uab_obj or obj.periodo != asignatura['PERIODO']:
                         obj.nombre = asignatura['ASIGNATURA']
+                        obj.periodo = asignatura['PERIODO']
                         obj.uab = uab_obj
                         obj.save()
                         print(f'Asignatura actualizada: {obj}')
@@ -150,19 +154,17 @@ class loadAsignaturas:
                     )
                     print(f'Asignatura creada: {obj}')
                 asignaturas_objs.append(obj)
-                # Ahora procesamos las relaciones con los planes de estudio y las tipologías
-                for index, row in df_asignaturas_plan.iterrows():
+                # Procesar relaciones con planes de estudio y tipologías
+                for _, row in df_asignaturas_plan_unicas.iterrows():
                     if row['COD_ASIGNATURA'] == asignatura['COD_ASIGNATURA']:
-                        plan_obj = next((p for p in planes_objs if p.codigo == row['COD_PLAN']), None)
-                        tipologia_obj = next((t for t in tipologias_objs if (t.codigo == row['COD_TIPOLOGIA'] and t.nombre == row['TIPOLOGIA'])), None)
+                        plan_obj = planes_dict.get(row['COD_PLAN'])
+                        tipologia_obj = tipologias_dict.get(row['COD_TIPOLOGIA'])
                         if plan_obj and tipologia_obj:
-                            # Buscar si ya existe una relación AsignaturaPlan para la asignatura y el plan (sin importar tipología)
                             asignatura_plan = AsignaturaPlan.objects.filter(
                                 asignatura=obj,
                                 plan_estudio=plan_obj
                             ).first()
                             if asignatura_plan:
-                                # Si la tipología es diferente, actualiza
                                 if asignatura_plan.tipologia != tipologia_obj:
                                     asignatura_plan.tipologia = tipologia_obj
                                     asignatura_plan.save()
@@ -170,7 +172,6 @@ class loadAsignaturas:
                                 else:
                                     print(f'AsignaturaPlan sin cambios: {asignatura_plan}')
                             else:
-                                # Si no existe, crea la relación
                                 asignatura_plan = AsignaturaPlan.objects.create(
                                     asignatura=obj,
                                     plan_estudio=plan_obj,
@@ -179,9 +180,7 @@ class loadAsignaturas:
                                 print(f'AsignaturaPlan creada: {asignatura_plan}')
                         else:
                             print(f'Plan de estudio o tipología no encontrada para la asignatura: {asignatura["ASIGNATURA"]} - Plan: {row["COD_PLAN"]}, Tipología: {row["COD_TIPOLOGIA"]}')
-        # Devolver la lista de asignaturas creadas o actualizadas
         print(f'Total de asignaturas procesadas: {len(asignaturas_objs)}')
-            
         return asignaturas_objs
     
     def get_planes_estudio(self):

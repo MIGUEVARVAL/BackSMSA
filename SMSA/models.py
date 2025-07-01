@@ -97,9 +97,11 @@ class Asignatura(models.Model):
     nombre = models.CharField(max_length=150)
     creditos = models.IntegerField()
     uab = models.ForeignKey(UnidadAcademica, on_delete=models.PROTECT, blank=True, null=True)
+    parametrizacion = models.BooleanField(default=True, blank=True, null=True)
     fecha_creacion = models.DateTimeField(auto_now_add=True, blank=True, null=True)
     fecha_modificacion = models.DateTimeField(auto_now=True, blank=True, null=True)
     descripcion = models.TextField(blank=True, null=True)
+    periodo_modificacion = models.CharField(max_length=45, blank=True, null=True)
 
     def __str__(self):
         return self.nombre
@@ -108,7 +110,8 @@ class Asignatura(models.Model):
 class AsignaturaPlan(models.Model):
     tipologia = models.ForeignKey(Tipologia, on_delete=models.PROTECT)
     asignatura = models.ForeignKey(Asignatura, on_delete=models.CASCADE)
-    plan_estudio = models.ForeignKey(PlanEstudio, on_delete=models.CASCADE)
+    plan_estudio = models.ForeignKey(PlanEstudio, on_delete=models.SET_NULL, blank=True, null=True)
+    parametrizacion = models.BooleanField(default=True, blank=True, null=True)
     fecha_modificacion = models.DateTimeField(auto_now=True, blank=True, null=True)
 
     def __str__(self):
