@@ -5,15 +5,15 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.pagination import PageNumberPagination
 
-class UserPagination(PageNumberPagination):
-    page_size = 40
+class Pagination(PageNumberPagination):
+    page_size = 20
 
 class SeguimientoViewSet(viewsets.ModelViewSet):
     queryset = Seguimiento.objects.all()
     serializer_class = SeguimientoSerializer
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
-    pagination_class = UserPagination
+    pagination_class = Pagination
 
     def get_queryset(self):
         queryset = super().get_queryset()

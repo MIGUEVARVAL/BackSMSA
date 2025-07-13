@@ -4,14 +4,14 @@ from rest_framework import viewsets, permissions
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.pagination import PageNumberPagination
 
-class UserPagination(PageNumberPagination):
+class Pagination(PageNumberPagination):
     page_size = 20
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     authentication_classes = [JWTAuthentication]
-    pagination_class = UserPagination
+    pagination_class = Pagination
 
     def get_permissions(self):
         if self.action == 'create':

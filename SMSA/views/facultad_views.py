@@ -4,7 +4,7 @@ from rest_framework import viewsets, permissions
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.pagination import PageNumberPagination
 
-class FacultadPagination(PageNumberPagination):
+class Pagination(PageNumberPagination):
     page_size = 20
 
 class FacultadViewSet(viewsets.ModelViewSet):
@@ -12,7 +12,7 @@ class FacultadViewSet(viewsets.ModelViewSet):
     serializer_class = FacultadSerializer
     permission_classes = [permissions.IsAuthenticated]
     authentication_classes = [JWTAuthentication]
-    pagination_class = FacultadPagination
+    pagination_class = Pagination
 
     def get_queryset(self):
         queryset = super().get_queryset()
