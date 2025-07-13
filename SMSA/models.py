@@ -142,7 +142,7 @@ class Seguimiento(models.Model):
     estudiante = models.ForeignKey(Estudiante, on_delete=models.CASCADE)
 
     def __str__(self):
-        return f"{self.estudiante} - {self.asignatura} ({self.fecha})"
+        return f"{self.estudiante} - ({self.fecha})"
     
 class HistoricoSeguimiento(models.Model):
     fecha = models.DateTimeField(auto_now_add=True)
@@ -152,4 +152,4 @@ class HistoricoSeguimiento(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
-        return f"{self.estudiante} - {self.asignatura} ({self.fecha})"
+        return f"{self.titulo} - ({self.fecha})"

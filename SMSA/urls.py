@@ -12,6 +12,7 @@ from SMSA.views.plan_estudio_views import PlanEstudioViewSet
 from SMSA.views.asignatura_plan_views import AsignaturaPlanViewSet
 from SMSA.views.tipologia_views import TipologiaViewSet
 from SMSA.views.historial_academico_views import HistorialAcademicoViewSet, HistorialAcademicoByPlanEstudioViewSet
+from SMSA.views.seguimiento_views import SeguimientoViewSet
 
 router = routers.DefaultRouter()
 
@@ -24,9 +25,8 @@ router.register('api/plan-estudio', PlanEstudioViewSet, 'plan-estudio')
 router.register('api/asignatura-plan', AsignaturaPlanViewSet, 'asignatura-plan')
 router.register('api/tipologia', TipologiaViewSet, 'tipologia')
 router.register('api/historial-academico', HistorialAcademicoViewSet, 'historial-academico')
-router.register('api/historial-academico-by-plan-estudio', HistorialAcademicoByPlanEstudioViewSet, 'historial-academico-by-plan-estudio'
-)
-
+router.register('api/historial-academico-by-plan-estudio', HistorialAcademicoByPlanEstudioViewSet, 'historial-academico-by-plan-estudio')
+router.register('api/estrategia', SeguimientoViewSet, 'estrategia')
 
 urlpatterns = [
     path('api/token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
