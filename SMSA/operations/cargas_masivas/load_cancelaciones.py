@@ -6,10 +6,7 @@ class loadCancelaciones:
 
     def __init__(self, archivo):
         # archivo: archivo recibido desde el frontend (request.FILES['archivo'])
-        # Hoja donde se encuentran las relaciones entre materia, plan y tipología
-        self.df_asignaturas_plan = self.read_excel(archivo, sheet_name=2)
-        # Hoja donde se encuentran las asignaturas
-        self.df_asignaturas = self.read_excel(archivo, sheet_name=1)
+        self.df_cancelaciones = self.read_excel(archivo, sheet_name=1)
 
 
     @staticmethod
@@ -24,4 +21,36 @@ class loadCancelaciones:
                 break
         return df
     
-    
+    def load_cancelaciones(self):
+
+        # Se recorre el DataFrame y se verifica si la tipologia ya existe en la base de datos y se actualiza o de lo contrario se crea
+        for index, row in self.df_cancelaciones.iterrows():
+
+            with transaction.atomic():
+
+                # Se consulta el estudiante por su documento
+                try:
+                    estudiante = Estudiante.objects.get(documento=row['DOCUMENTO'])
+                except Estudiante.DoesNotExist:
+                    continue
+                
+                # Se consulta la asignatura por su código
+                try:
+                    asignatura = Asignatura.objects.get(codigo=row['COD_ASIGNATURA'])
+                except Asignatura.DoesNotExist:
+                    continue   
+
+                # Se crea el historial académico
+                try:
+                    historial_academico, created = HistorialAcademico.objects.get_or_create(
+                        estudiante=estudiante,
+                        asignatura=asignatura,
+                        defaults={
+                            'semestre': row['PERIODO'],
+                            'tipo_cancelacion': row['TIPO_CANCELACION'],
+                            'estado': 'CN'
+                        }
+                    )
+                    print(f'Historial académico creado para {estudiante.documento} - {asignatura.codigo}')
+                except Exception as e:
+                    print(f'Error al crear o actualizar el historial académico: {e}')
