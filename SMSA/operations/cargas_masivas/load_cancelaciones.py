@@ -45,8 +45,8 @@ class loadCancelaciones:
                     historial_academico, created = HistorialAcademico.objects.get_or_create(
                         estudiante=estudiante,
                         asignatura=asignatura,
+                        semestre=row['PERIODO'], 
                         defaults={
-                            'semestre': row['PERIODO'],
                             'tipo_cancelacion': row['TIPO_CANCELACION'],
                             'estado': 'CN'
                         }

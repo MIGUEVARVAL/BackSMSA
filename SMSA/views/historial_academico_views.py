@@ -45,7 +45,7 @@ class HistorialAcademicoByPlanEstudioViewSet(viewsets.ReadOnlyModelViewSet):
             return Response([])
 
         # Buscar asignaturas del plan
-        from SMSA.models import AsignaturaPlan, Tipologia
+        from SMSA.models import AsignaturaPlan
         asignatura_plans = AsignaturaPlan.objects.filter(plan_estudio_id=plan_estudio_id)
         tipologia_dict = {}
         for ap in asignatura_plans:

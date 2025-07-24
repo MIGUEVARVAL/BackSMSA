@@ -22,13 +22,16 @@ class HistoricoSeguimientoViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = super().get_queryset()
 
-        seguimiento_id = self.request.query_params.get('seguimiento_id', None)
+        seguimiento_id = self.request.query_params.get('estrategia_id', None)
         fecha_inicio = self.request.query_params.get('fecha_inicio', None)
         fecha_fin = self.request.query_params.get('fecha_fin', None)
+        estudiante_id = self.request.query_params.get('estudiante_id', None)
 
         if seguimiento_id is not None:
             queryset = queryset.filter(seguimiento__id=seguimiento_id)
         if fecha_inicio and fecha_fin:
             queryset = queryset.filter(fecha__range=[fecha_inicio, fecha_fin])
+        if estudiante_id is not None:
+            queryset = queryset.filter(seguimiento__estudiante__id=estudiante_id)
 
         return queryset
