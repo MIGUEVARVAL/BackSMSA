@@ -62,6 +62,8 @@ class PlanEstudio(models.Model):
 
     def __str__(self):
         return self.nombre
+    
+    
 
 class PlanEstudioAcuerdos(models.Model):
     titulo = models.CharField(max_length=200) # Título del acuerdo
