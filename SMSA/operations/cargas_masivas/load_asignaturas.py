@@ -158,7 +158,11 @@ class loadAsignaturas:
                 for _, row in df_asignaturas_plan_unicas.iterrows():
                     if row['COD_ASIGNATURA'] == asignatura['COD_ASIGNATURA']:
                         plan_obj = planes_dict.get(row['COD_PLAN'])
-                        tipologia_obj = tipologias_dict.get(row['COD_TIPOLOGIA'])
+                        tipologia_obj = None
+                        for t in tipologias_dict:
+                            if t.codigo == row['COD_TIPOLOGIA'] and t.nombre == row['TIPOLOGIA']:
+                                tipologia_obj = t
+                                break
                         if plan_obj and tipologia_obj:
                             asignatura_plan = AsignaturaPlan.objects.filter(
                                 asignatura=obj,
@@ -180,6 +184,7 @@ class loadAsignaturas:
                                 print(f'AsignaturaPlan creada: {asignatura_plan}')
                         else:
                             print(f'Plan de estudio o tipología no encontrada para la asignatura: {asignatura["ASIGNATURA"]} - Plan: {row["COD_PLAN"]}, Tipología: {row["COD_TIPOLOGIA"]}')
+                    
         print(f'Total de asignaturas procesadas: {len(asignaturas_objs)}')
         return asignaturas_objs
     
