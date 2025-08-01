@@ -63,8 +63,6 @@ class PlanEstudio(models.Model):
     def __str__(self):
         return self.nombre
     
-    
-
 class PlanEstudioAcuerdos(models.Model):
     titulo = models.CharField(max_length=200) # Título del acuerdo
     link = models.URLField(max_length=1000, blank=True, null=True) # Enlace al documento del acuerdo
@@ -74,16 +72,6 @@ class PlanEstudioAcuerdos(models.Model):
 
     def __str__(self):
         return f"{self.plan_estudio.nombre} - {self.titulo}"
-
-class Periodo(models.Model):
-    anio = models.CharField(max_length=10) # Año del periodo académico
-    periodo = models.CharField(max_length=45) # Periodo académico (ejemplo: "1", "2", "3", etc.)
-    tipo_duracion = models.CharField(max_length=45, blank=True, null=True) # Tipo de duración del periodo (ejemplo: "S", "T", "A")
-    fecha_inicio = models.DateField() # Fecha de inicio del periodo
-    fecha_fin = models.DateField() # Fecha de fin del periodo
-
-    def __str__(self):
-        return f"{self.anio}-{self.periodo}"
 
 class Estudiante(models.Model):
     acceso = models.CharField(max_length=45, blank=True, null=True) 
@@ -108,7 +96,7 @@ class Estudiante(models.Model):
     reserva_cupo = models.IntegerField(default=0, blank=True, null=True)
     victima_conflicto = models.BooleanField(default=False, blank=True, null=True)
     discapacidad = models.CharField(max_length=100, blank=True, null=True)
-    matricula_periodo_activo = models.CharField(max_length=10, default='SI', blank=True, null=True) #Revisar
+    activo = models.BooleanField(default=True, blank=True, null=True)
     plan_estudio = models.ForeignKey(PlanEstudio, on_delete=models.PROTECT, blank=True, null=True)
     cupo_creditos = models.IntegerField(default=0, blank=True, null=True)
     creditos_pendientes = models.IntegerField(default=0, blank=True, null=True)
@@ -143,7 +131,7 @@ class Asignatura(models.Model):
     acta_aprobacion = models.CharField(max_length=100, blank=True, null=True)
     fecha_creacion = models.DateTimeField(auto_now_add=True, blank=True, null=True)
     fecha_modificacion = models.DateTimeField(auto_now=True, blank=True, null=True)
-    periodo = models.ForeignKey(Periodo, on_delete=models.PROTECT, blank=True, null=True) # Relación con el periodo académico
+    periodo = models.CharField(max_length=10, blank=True, null=True)
     uab = models.ForeignKey(UnidadAcademica, on_delete=models.PROTECT, blank=True, null=True) # Relación con la unidad académica a la que pertenece
     def __str__(self):
         return self.nombre
@@ -172,7 +160,7 @@ class HistorialAcademico(models.Model):
     fecha_modificacion = models.DateTimeField(auto_now=True, blank=True, null=True)
     estudiante = models.ForeignKey(Estudiante, on_delete=models.CASCADE)
     asignatura = models.ForeignKey(Asignatura, on_delete=models.CASCADE)
-    periodo = models.ForeignKey(Periodo, on_delete=models.PROTECT, blank=True, null=True) # Relación con el periodo académico
+    periodo = models.CharField(max_length=10, blank=True, null=True) # Periodo académico del historial
 
     def __str__(self):
         return f"{self.estudiante} - {self.asignatura} ({self.periodo})"

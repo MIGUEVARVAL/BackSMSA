@@ -27,7 +27,7 @@ class loadAsignaturas:
     def load_asignaturas(self):
         # Filtrar las columnas relevantes
         df_asignaturas_plan = self.df_asignaturas_plan[['COD_ASIGNATURA', 'COD_PLAN', 'COD_TIPOLOGIA', 'TIPOLOGIA', 'PERIDO DE OFERTA']].copy()
-        df_asignaturas = self.df_asignaturas[['COD_FACULTAD', 'FACULTAD', 'COD_UAB', 'UAB', 'COD_ASIGNATURA', 'ASIGNATURA', 'CREDITOS', 'PERIODO']].copy()
+        df_asignaturas = self.df_asignaturas[['COD_FACULTAD', 'FACULTAD', 'COD_UAB', 'UAB', 'COD_ASIGNATURA', 'ASIGNATURA', 'CREDITOS', 'PERIODO', 'NUM_SEMANAS', 'HORAS_TEORICAS', 'HORAS_PRACTICAS', 'MININANSISTENCIA', 'ASIG_VALIDABLE']].copy()
         # Normalizar el valor de la columna TIPOLOGIA
         df_asignaturas_plan.loc[df_asignaturas_plan['TIPOLOGIA'] == 'FUND. OPTATIVA', 'TIPOLOGIA'] = 'FUNDAMENTACIÓN OPTATIVA'
         df_asignaturas_plan.loc[df_asignaturas_plan['TIPOLOGIA'] == 'FUND. OBLIGATORIA', 'TIPOLOGIA'] = 'FUNDAMENTACIÓN OBLIGATORIA'
@@ -35,7 +35,6 @@ class loadAsignaturas:
         tipologias_unicas = df_asignaturas_plan[['COD_TIPOLOGIA', 'TIPOLOGIA']].drop_duplicates().to_dict(orient='records')
         # Crear o actualizar las tipologías en la base de datos
         tipologias_objs = self.create_tipologias(tipologias_unicas)
-        tipologias_dict = {t.codigo: t for t in tipologias_objs}
         # Crear una lista para las facultades únicas
         facultades_unicas = df_asignaturas[['COD_FACULTAD', 'FACULTAD']].drop_duplicates().to_dict(orient='records')
         # Crear o actualizar las facultades en la base de datos
@@ -50,10 +49,10 @@ class loadAsignaturas:
         planes_objs = self.get_planes_estudio()
         planes_dict = {p.codigo: p for p in planes_objs}
         # Crear una lista para las asignaturas
-        asignaturas_unicas = df_asignaturas[['COD_ASIGNATURA', 'ASIGNATURA', 'COD_UAB', 'CREDITOS', 'PERIODO']].drop_duplicates().to_dict(orient='records')
+        asignaturas_unicas = df_asignaturas.drop_duplicates().to_dict(orient='records')
         df_asignaturas_plan_unicas = df_asignaturas_plan.drop_duplicates(subset=['COD_ASIGNATURA', 'COD_PLAN', 'COD_TIPOLOGIA', 'TIPOLOGIA']).copy()
         # Crear o actualizar las asignaturas en la base de datos
-        asignaturas_objs = self.create_update_asignaturas_plan(asignaturas_unicas, uab_dict, tipologias_dict, planes_dict, df_asignaturas_plan_unicas)
+        asignaturas_objs = self.create_update_asignaturas_plan(asignaturas_unicas, uab_dict, tipologias_objs, planes_dict, df_asignaturas_plan_unicas)
 
     # Función para crear o actualizar las tipologías
     def create_tipologias(self, tipologias):
@@ -127,67 +126,133 @@ class loadAsignaturas:
         return uab_objs
     
     # Función para crear o actualizar las asignaturas
-    def create_update_asignaturas_plan(self, asignaturas_unicas, uab_dict, tipologias_dict, planes_dict, df_asignaturas_plan_unicas):
+    def create_update_asignaturas_plan(self, asignaturas_unicas, uab_dict, tipologias_objs, planes_dict, df_asignaturas_plan_unicas):
         asignaturas_objs = []
-        with transaction.atomic():
-            for asignatura in asignaturas_unicas:
-                uab_obj = uab_dict.get(asignatura['COD_UAB'])
-                if not uab_obj:
-                    print(f'UAB no encontrada para la asignatura: {asignatura["ASIGNATURA"]}')
-                    continue
-                obj = Asignatura.objects.filter(codigo=asignatura['COD_ASIGNATURA']).first()
-                if obj:
-                    if obj.nombre != asignatura['ASIGNATURA'] or obj.uab != uab_obj or obj.periodo != asignatura['PERIODO']:
-                        obj.nombre = asignatura['ASIGNATURA']
-                        obj.periodo = asignatura['PERIODO']
-                        obj.uab = uab_obj
-                        obj.save()
-                        print(f'Asignatura actualizada: {obj}')
-                    else:
-                        print(f'Asignatura sin cambios: {obj}')
-                else:
-                    obj = Asignatura.objects.create(
-                        codigo=asignatura['COD_ASIGNATURA'],
-                        nombre=asignatura['ASIGNATURA'],
-                        creditos=asignatura['CREDITOS'],
-                        uab=uab_obj
-                    )
-                    print(f'Asignatura creada: {obj}')
-                asignaturas_objs.append(obj)
-                # Procesar relaciones con planes de estudio y tipologías
-                for _, row in df_asignaturas_plan_unicas.iterrows():
-                    if row['COD_ASIGNATURA'] == asignatura['COD_ASIGNATURA']:
-                        plan_obj = planes_dict.get(row['COD_PLAN'])
-                        tipologia_obj = None
-                        for t in tipologias_dict:
-                            if t.codigo == row['COD_TIPOLOGIA'] and t.nombre == row['TIPOLOGIA']:
-                                tipologia_obj = t
-                                break
-                        if plan_obj and tipologia_obj:
-                            asignatura_plan = AsignaturaPlan.objects.filter(
-                                asignatura=obj,
-                                plan_estudio=plan_obj
-                            ).first()
-                            if asignatura_plan:
-                                if asignatura_plan.tipologia != tipologia_obj:
-                                    asignatura_plan.tipologia = tipologia_obj
-                                    asignatura_plan.save()
-                                    print(f'AsignaturaPlan actualizada (tipología cambiada): {asignatura_plan}')
-                                else:
-                                    print(f'AsignaturaPlan sin cambios: {asignatura_plan}')
-                            else:
-                                asignatura_plan = AsignaturaPlan.objects.create(
-                                    asignatura=obj,
-                                    plan_estudio=plan_obj,
-                                    tipologia=tipologia_obj
-                                )
-                                print(f'AsignaturaPlan creada: {asignatura_plan}')
+        try:
+            with transaction.atomic():
+                for asignatura in asignaturas_unicas:
+                    uab_obj = uab_dict.get(asignatura['COD_UAB'])
+                    if not uab_obj:
+                        print(f'UAB no encontrada para la asignatura: {asignatura["ASIGNATURA"]}')
+                        continue
+                    # Normalizar valores antes de procesar
+                    for key in ['NUM_SEMANAS', 'HORAS_TEORICAS', 'HORAS_PRACTICAS', 'MININANSISTENCIA']:
+                        if pd.isna(asignatura[key]):
+                            asignatura[key] = None
+                    # Normalizar el valor de ASIG_VALIDABLE
+                    asignatura['ASIG_VALIDABLE'] = True if asignatura['ASIG_VALIDABLE'] == 'SI' else False
+                    obj = Asignatura.objects.filter(codigo=asignatura['COD_ASIGNATURA']).first()
+                    if obj:
+                        campos_actualizar = self._asignatura_necesita_actualizacion(obj, asignatura, uab_obj)
+                        if campos_actualizar:
+                            for campo, valor in campos_actualizar.items():
+                                setattr(obj, campo, valor)
+                            obj.save()
+                            print(f'Asignatura actualizada: {obj.codigo}')
                         else:
-                            print(f'Plan de estudio o tipología no encontrada para la asignatura: {asignatura["ASIGNATURA"]} - Plan: {row["COD_PLAN"]}, Tipología: {row["COD_TIPOLOGIA"]}')
-                    
+                            print(f'Asignatura sin cambios: {obj.codigo}')
+                    else:
+                        campos = {
+                            'codigo': asignatura['COD_ASIGNATURA'],
+                            'nombre': asignatura['ASIGNATURA'],
+                            'creditos': asignatura['CREDITOS'],
+                            'uab': uab_obj,
+                            'numero_semanas': asignatura['NUM_SEMANAS'],
+                            'horas_teoricas': asignatura['HORAS_TEORICAS'],
+                            'horas_practicas': asignatura['HORAS_PRACTICAS'],
+                            'asistencia_minima': asignatura['MININANSISTENCIA'],
+                            'validable': asignatura['ASIG_VALIDABLE'],
+                            'periodo': asignatura['PERIODO']
+                        }
+
+                        # Mejorar la conversión de NaN a None
+                        for k, v in campos.items():
+                            if pd.isna(v):
+                                campos[k] = None
+                            elif k in ['numero_semanas', 'horas_teoricas', 'horas_practicas', 'asistencia_minima'] and v is not None:
+                                # Convertir a entero si es un campo numérico
+                                try:
+                                    campos[k] = int(float(v)) if v != '' else None
+                                except (ValueError, TypeError):
+                                    campos[k] = None
+
+                        obj = Asignatura.objects.create(**campos)
+                        print(f'Asignatura creada: {obj}')
+                    asignaturas_objs.append(obj)
+                    # Procesar relaciones con planes de estudio y tipologías
+                    for _, row in df_asignaturas_plan_unicas.iterrows():
+                        if row['COD_ASIGNATURA'] == asignatura['COD_ASIGNATURA']:
+                            plan_obj = planes_dict.get(row['COD_PLAN'])
+                            tipologia_obj = None
+                            for t in tipologias_objs:
+                                if t.codigo == row['COD_TIPOLOGIA'] and t.nombre == row['TIPOLOGIA']:
+                                    tipologia_obj = t
+                                    break
+                            if plan_obj and tipologia_obj:
+                                asignatura_plan = AsignaturaPlan.objects.filter(
+                                    asignatura=obj,
+                                    plan_estudio=plan_obj
+                                ).first()
+                                if asignatura_plan:
+                                    if asignatura_plan.tipologia != tipologia_obj:
+                                        asignatura_plan.tipologia = tipologia_obj
+                                        asignatura_plan.save()
+                                        print(f'AsignaturaPlan actualizada (tipología cambiada): {asignatura_plan}')
+                                    else:
+                                        print(f'AsignaturaPlan sin cambios: {asignatura_plan}')
+                                else:
+                                    asignatura_plan = AsignaturaPlan.objects.create(
+                                        asignatura=obj,
+                                        plan_estudio=plan_obj,
+                                        tipologia=tipologia_obj
+                                    )
+                                    print(f'AsignaturaPlan creada: {asignatura_plan}')
+                            else:
+                                print(f'Plan de estudio o tipología no encontrada para la asignatura: {asignatura["ASIGNATURA"]} - Plan: {row["COD_PLAN"]}, Tipología: {row["COD_TIPOLOGIA"]}')
+        except Exception as e:
+            print(f'Error al procesar las asignaturas: {e}')
+            raise e              
         print(f'Total de asignaturas procesadas: {len(asignaturas_objs)}')
         return asignaturas_objs
     
+    def _asignatura_necesita_actualizacion(self, obj, datos_nuevos, uab_obj):
+        """Verifica si la asignatura necesita actualización"""
+        campos_comparar = [
+            ('uab', uab_obj),
+            ('periodo', datos_nuevos['PERIODO']),
+            ('numero_semanas', datos_nuevos['NUM_SEMANAS']),
+            ('horas_teoricas', datos_nuevos['HORAS_TEORICAS']),
+            ('horas_practicas', datos_nuevos['HORAS_PRACTICAS']),
+            ('asistencia_minima', datos_nuevos['MININANSISTENCIA']),
+            ('validable', datos_nuevos['ASIG_VALIDABLE'])
+        ]
+        
+        campos_actualizar = {}
+        for campo, valor_nuevo in campos_comparar:
+            # Validar si el valor es None o NaN
+            if valor_nuevo is None or pd.isna(valor_nuevo):
+                continue  # No actualizar si el valor nuevo es nulo o NaN
+            
+            try:
+                valor_actual = getattr(obj, campo)
+                
+                # Comparar valores manejando casos especiales
+                if pd.isna(valor_actual) and pd.isna(valor_nuevo):
+                    continue  # Ambos son NaN, no hay cambio
+                elif pd.isna(valor_actual) or pd.isna(valor_nuevo):
+                    # Uno es NaN y el otro no, hay cambio
+                    campos_actualizar[campo] = None if pd.isna(valor_nuevo) else valor_nuevo
+                elif valor_actual != valor_nuevo:
+                    # Ambos son valores válidos pero diferentes
+                    campos_actualizar[campo] = valor_nuevo
+                    
+            except AttributeError:
+                print(f"Campo {campo} no existe en el modelo Asignatura")
+            except Exception as e:
+                print(f"Error comparando campo {campo}: {e}")
+        
+        return campos_actualizar
+
     def get_planes_estudio(self):
         planes = PlanEstudio.objects.all()
         return planes

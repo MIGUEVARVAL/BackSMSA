@@ -33,8 +33,7 @@ class EstudianteViewSet(viewsets.ModelViewSet):
         avance_max = self.request.query_params.get('avanceMax')
         orderBy = self.request.query_params.get('orderBy')
         orderDirection = self.request.query_params.get('orderDirection')
-        estudianteRiesgo = self.request.query_params.get('estudianteRiesgo', None)
-
+        
         if codigoFacultad is not None:
             queryset = queryset.filter(plan_estudio__facultad__codigo=codigoFacultad)
         if documento:
@@ -52,28 +51,28 @@ class EstudianteViewSet(viewsets.ModelViewSet):
         if subacceso:
             queryset = queryset.filter(subacceso=subacceso)
         if estado:
-            queryset = queryset.filter(matricula_periodo_activo=estado)
+            queryset = queryset.filter(activo=estado)
+        else:
+            queryset = queryset.filter(activo=True)
         if matriculas:
             queryset = queryset.filter(numero_matriculas=matriculas)
         if papa_min:
             queryset = queryset.filter(papa__gte=papa_min)
+        else:
+            queryset = queryset.filter(papa__isnull=False)  # Asegurar que papa no sea None
         if papa_max:
             queryset = queryset.filter(papa__lte=papa_max)
         if avance_min:
             queryset = queryset.filter(avance_carrera__gte=avance_min)
         if avance_max:
             queryset = queryset.filter(avance_carrera__lte=avance_max)
-        if estudianteRiesgo is not None:
-            if estudianteRiesgo.lower() == 'true':
-                queryset = queryset.filter(estudiante_riesgo=True)
-            elif estudianteRiesgo.lower() == 'false':
-                queryset = queryset.filter(estudiante_riesgo=False)
         if orderBy:
             if orderDirection == "DESC":
                 orderBy = f"-{orderBy}"  
             queryset = queryset.order_by(orderBy)
         else:
-            queryset = queryset.order_by('-estudiante_riesgo')  # Orden por defecto
+            queryset = queryset.order_by('papa')  # Orden por defecto
+            queryset = queryset.order_by('-activo')  # Ordena primero los True (activos), luego los False (inactivos)
         
 
         return queryset
