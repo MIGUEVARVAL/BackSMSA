@@ -25,7 +25,7 @@ class EstudianteViewSet(viewsets.ModelViewSet):
         plan = self.request.query_params.get('programa')
         acceso = self.request.query_params.get('acceso')
         subacceso = self.request.query_params.get('subacceso')
-        estado = self.request.query_params.get('estado')
+        activo = self.request.query_params.get('activo')
         matriculas = self.request.query_params.get('matriculas')
         papa_min = self.request.query_params.get('papaMin')
         papa_max = self.request.query_params.get('papaMax')
@@ -50,8 +50,11 @@ class EstudianteViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(acceso=acceso)
         if subacceso:
             queryset = queryset.filter(subacceso=subacceso)
-        if estado:
-            queryset = queryset.filter(activo=estado)
+        if activo is not None:
+            if activo.lower() == 'true':
+                queryset = queryset.filter(activo=True)
+            elif activo.lower() == 'false':
+                queryset = queryset.filter(activo=False)
         else:
             queryset = queryset.filter(activo=True)
         if matriculas:

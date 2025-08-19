@@ -5,7 +5,7 @@ from SMSA.operations.cargas_masivas.load_estudiantes_riesgo import loadEstudiant
 from SMSA.operations.cargas_masivas.load_notas_finales import loadNotasFinales
 from SMSA.operations.cargas_masivas.load_cancelaciones import loadCancelaciones
 
-from rest_framework import viewsets, permissions
+from rest_framework import viewsets, permissions, status
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.response import Response
 from rest_framework.decorators import action
@@ -15,18 +15,81 @@ class CargasMasivasViewSet(viewsets.ViewSet):
     authentication_classes = [JWTAuthentication]
     permission_classes = [permissions.IsAuthenticated]
 
+    def validaciones_iniciales(self, archivo):
+        errores = []
+        
+        if not archivo:
+            errores.append({
+                'codigo_error': '0001',
+                'tipo_error': 'ARCHIVO_FALTANTE',
+                'detalle': 'No se envió ningún archivo',
+            })
+
+        # Validar tamaño del archivo (ejemplo: máximo 10MB)
+        if archivo.size > 10 * 1024 * 1024:  # 10MB
+            errores.append({
+                'codigo_error': '0002',
+                'tipo_error': 'ARCHIVO_MUY_GRANDE',
+                'detalle': 'El archivo es demasiado grande (>10MB), el archivo compartido tiene un tamaño de {size} bytes'.format(size=archivo.size),
+            })
+
+        # Validar tipo de archivo
+        if hasattr(archivo, 'name'):
+            file_name = archivo.name.lower()
+            if not (file_name.endswith('.xlsx') or file_name.endswith('.xls')):
+                errores.append({
+                    'codigo_error': '0003',
+                    'tipo_error': 'FORMATO_ARCHIVO_INVALIDO',
+                    'detalle': 'Formato de archivo no válido, se esperaba un archivo Excel (.xlsx o .xls)'
+                })
+        
+        return errores
+
+
     @action(detail=False, methods=['post'], url_path='planes-estudio')
     def cargar_planes_estudio(self, request):
-        archivo = request.FILES.get('file')
-        if not archivo:
-            return Response({'detail': 'No se envió ningún archivo.'}, status=400)
+        errores = []
         try:
-            cargador = loadPlanesEstudio(archivo)
-            cargador.load_planes_estudio()
-            return Response({'detail': 'Planes de estudio cargados exitosamente.'}, status=200)
+            archivo = request.FILES.get('file')
+            
+            # Validaciones del archivo
+            errores = self.validaciones_iniciales(archivo)
+            if errores:
+                return Response({
+                    'errores': errores,
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            try:
+                cargador = loadPlanesEstudio(archivo)
+            except Exception as e:
+                errores.append({
+                    'codigo_error': '0004',
+                    'tipo_error': 'ERROR_INICIALIZACION',
+                    'detalle': f'Error al inicializar el cargador de planes de estudio: {str(e)} \n Asegúrese de que el archivo tenga el formato correcto y contenga las hojas necesarias.',
+                })
+                return Response({
+                    'errores': errores,
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            resultado = cargador.load_planes_estudio()
+            print(resultado)
+
+            if resultado.get('exitoso', False):
+                return Response(resultado, status=status.HTTP_200_OK)
+            else:
+                return Response(resultado, status=status.HTTP_400_BAD_REQUEST)
+                
         except Exception as e:
-            return Response({'detail': str(e)}, status=500)
-        
+            # Error no controlado
+            errores.append({
+                'codigo_error': '0005',
+                'tipo_error': 'ERROR_INESPERADO',
+                'detalle': f'Error inesperado al procesar el archivo: {str(e)}',
+            })
+            return Response({
+                'errores': errores,
+            }, status=status.HTTP_400_BAD_REQUEST)
+
     @action(detail=False, methods=['post'], url_path='parametrizacion-asignaturas')
     def cargar_asignaturas(self, request):
         archivo = request.FILES.get('file')
