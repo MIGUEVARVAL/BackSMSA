@@ -1,7 +1,6 @@
 import pandas as pd
-from SMSA.models import Tipologia, Asignatura, PlanEstudio, Facultad, Sede
+from SMSA.models import PlanEstudio, Facultad, Sede
 from django.db import transaction
-import json
 
 class loadPlanesEstudio:
 
@@ -33,8 +32,8 @@ class loadPlanesEstudio:
         Limpia el DataFrame de planes de estudio, reemplazando valores NaN/None por None (nulo de Python)
         y eliminando espacios en blanco innecesarios en los campos de texto.
         """
-        if not hasattr(self, 'df_planes_estudio') or self.df_planes_estudio is None:
-            return
+        if df is None or df.empty:
+            return df
 
         # Reemplazar todos los valores NaN por None
         df = df.where(
@@ -137,38 +136,30 @@ class loadPlanesEstudio:
         try:
             with transaction.atomic():
                 for idx, sede in enumerate(sedes):
-                    try:
-                        # Validar datos requeridos
-                        if not sede.get('COD_SEDE') or not sede.get('SEDE'):
-                            self.errores.append({
-                                'codigo_error': '0003',
-                                'tipo_error': 'DATOS_SEDE_INCOMPLETOS',
-                                'detalle': f'Código o nombre de la sede es obligatorio, error detectado para la sede con código {sede["COD_SEDE"]} y nombre {sede["SEDE"]}'
-                            })
-                            continue
-                        
-                        obj = Sede.objects.filter(codigo=sede['COD_SEDE']).first()
-                        if obj:
-                            if obj.nombre != sede['SEDE']:
-                                obj.nombre = sede['SEDE']
-                                obj.save()
-                                print(f'Sede actualizada: {obj}')
-                            else:
-                                print(f'Sede sin cambios: {obj}')
-                        else:
-                            obj = Sede.objects.create(
-                                codigo=sede['COD_SEDE'],
-                                nombre=sede['SEDE']
-                            )
-                            print(f'Sede creada: {obj}')
-                        sedes_objs.append(obj)
-                        
-                    except Exception as e:
+                    # Validar datos requeridos
+                    if not sede.get('COD_SEDE') or not sede.get('SEDE'):
                         self.errores.append({
                             'codigo_error': '0003',
-                            'tipo_error': 'ERROR_TRANSACCION_SEDES',
-                            'detalle': f'Error al procesar sede: {str(e)} \n Valide que los campos "COD_SEDE" y "SEDE" no estén vacíos ',
+                            'tipo_error': 'DATOS_SEDE_INCOMPLETOS',
+                            'detalle': f'Código o nombre de la sede es obligatorio, error detectado para la sede con código {sede["COD_SEDE"]} y nombre {sede["SEDE"]}'
                         })
+                        continue
+                    
+                    obj = Sede.objects.filter(codigo=sede['COD_SEDE']).first()
+                    if obj:
+                        if obj.nombre != sede['SEDE']:
+                            obj.nombre = sede['SEDE']
+                            obj.save()
+                            print(f'Sede actualizada: {obj}')
+                        else:
+                            print(f'Sede sin cambios: {obj}')
+                    else:
+                        obj = Sede.objects.create(
+                            codigo=sede['COD_SEDE'],
+                            nombre=sede['SEDE']
+                        )
+                        print(f'Sede creada: {obj}')
+                    sedes_objs.append(obj)
             
             return {
                 'exitoso': True,
@@ -192,50 +183,42 @@ class loadPlanesEstudio:
         
         try:
             with transaction.atomic():
-                for idx, facultad in enumerate(facultades):
-                    try:
-                        sede_obj = next((s for s in sedes_objs if s.codigo == facultad['COD_SEDE']), None)
-                        if not sede_obj:
-                            self.errores.append({
-                                'codigo_error': '0004',
-                                'tipo_error': 'DATOS_FACULTAD_INCOMPLETOS',
-                                'detalle': f'Sede no encontrada para la facultad con código {facultad.get("COD_FACULTAD")}',
-                            })
-                            continue
-                            
-                        # Validar datos requeridos
-                        if not facultad.get('COD_FACULTAD') or not facultad.get('FACULTAD'):
-                            self.errores.append({
-                                'codigo_error': '0004',
-                                'tipo_error': 'DATOS_FACULTAD_INCOMPLETOS',
-                                'detalle': f'Código o nombre de la facultad es obligatorio, error detectado para la facultad con código {facultad.get("COD_FACULTAD")} y nombre {facultad.get("FACULTAD")}',
-                            })
-                            continue
-                        
-                        obj = Facultad.objects.filter(codigo=facultad['COD_FACULTAD']).first()
-                        if obj:
-                            if obj.nombre != facultad['FACULTAD'] or obj.sede != sede_obj:
-                                obj.nombre = facultad['FACULTAD']
-                                obj.sede = sede_obj
-                                obj.save()
-                                print(f'Facultad actualizada: {obj}')
-                            else:
-                                print(f'Facultad sin cambios: {obj}')
-                        else:
-                            obj = Facultad.objects.create(
-                                codigo=facultad['COD_FACULTAD'],
-                                nombre=facultad['FACULTAD'],
-                                sede=sede_obj
-                            )
-                            print(f'Facultad creada: {obj}')
-                        facultades_objs.append(obj)
-                        
-                    except Exception as e:
+                for facultad in facultades:
+                    sede_obj = next((s for s in sedes_objs if s.codigo == facultad['COD_SEDE']), None)
+                    if not sede_obj:
                         self.errores.append({
                             'codigo_error': '0004',
-                            'tipo_error': 'ERROR_TRANSACCION_FACULTADES',
-                            'detalle': f'Error al procesar facultad: {str(e)}',
+                            'tipo_error': 'DATOS_FACULTAD_INCOMPLETOS',
+                            'detalle': f'Sede no encontrada para la facultad con código {facultad.get("COD_FACULTAD")}',
                         })
+                        continue
+                        
+                    # Validar datos requeridos
+                    if not facultad.get('COD_FACULTAD') or not facultad.get('FACULTAD'):
+                        self.errores.append({
+                            'codigo_error': '0004',
+                            'tipo_error': 'DATOS_FACULTAD_INCOMPLETOS',
+                            'detalle': f'Código o nombre de la facultad es obligatorio, error detectado para la facultad con código {facultad.get("COD_FACULTAD")} y nombre {facultad.get("FACULTAD")}',
+                        })
+                        continue
+                    
+                    obj = Facultad.objects.filter(codigo=facultad['COD_FACULTAD']).first()
+                    if obj:
+                        if obj.nombre != facultad['FACULTAD'] or obj.sede != sede_obj:
+                            obj.nombre = facultad['FACULTAD']
+                            obj.sede = sede_obj
+                            obj.save()
+                            print(f'Facultad actualizada: {obj}')
+                        else:
+                            print(f'Facultad sin cambios: {obj}')
+                    else:
+                        obj = Facultad.objects.create(
+                            codigo=facultad['COD_FACULTAD'],
+                            nombre=facultad['FACULTAD'],
+                            sede=sede_obj
+                        )
+                        print(f'Facultad creada: {obj}')
+                    facultades_objs.append(obj)
 
             return {
                 'exitoso': True,
