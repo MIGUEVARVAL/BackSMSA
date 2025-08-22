@@ -357,6 +357,10 @@ class loadAsignaturas:
 
         try:
             with transaction.atomic():
+
+                #Inactivar todas las asignaturas
+                Asignatura.objects.all().update(activo=False)
+
                 for asignatura in asignaturas_unicas:
                     uab_obj = uab_dict.get(asignatura['COD_UAB'])
                     if not uab_obj:
@@ -390,10 +394,12 @@ class loadAsignaturas:
                         if campos_actualizar:
                             for campo, valor in campos_actualizar.items():
                                 setattr(obj, campo, valor)
-                            obj.save()
                             print(f'Asignatura actualizada: {obj.codigo}')
                         else:
                             print(f'Asignatura sin cambios: {obj.codigo}')
+                        obj.activo = True  # Marcar como activo
+                        obj.save()
+                        
                     else:
                         campos = {
                             'codigo': asignatura['COD_ASIGNATURA'],

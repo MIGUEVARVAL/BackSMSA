@@ -207,6 +207,12 @@ class loadEstudiantesActivos:
                                 plan_estudio = PlanEstudio.objects.get(codigo=plan_estudio_codigo)
                                 if plan_estudio:
                                     estudiante.plan_estudio = plan_estudio
+                                else:
+                                    self.errores.append({
+                                        'codigo_error': '0004',
+                                        'tipo_error': 'PLAN_ESTUDIO_NO_ENCONTRADO',
+                                        'detalle': f'El plan de estudio {plan_estudio_codigo} para el estudiante con documento {documento} ubicado en la fila {index + self.fila_dato} no existe.'
+                                    })
                             else:
                                 self.errores.append({
                                     'codigo_error': '0004',

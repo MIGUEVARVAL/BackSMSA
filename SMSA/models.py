@@ -131,7 +131,7 @@ class Asignatura(models.Model):
     acta_aprobacion = models.CharField(max_length=100, blank=True, null=True)
     fecha_creacion = models.DateTimeField(auto_now_add=True, blank=True, null=True)
     fecha_modificacion = models.DateTimeField(auto_now=True, blank=True, null=True)
-    periodo = models.CharField(max_length=10, blank=True, null=True)
+    activo = models.BooleanField(default=True)
     uab = models.ForeignKey(UnidadAcademica, on_delete=models.PROTECT, blank=True, null=True) # Relación con la unidad académica a la que pertenece
     def __str__(self):
         return self.nombre
