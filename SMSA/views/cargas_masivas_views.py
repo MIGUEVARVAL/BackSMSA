@@ -256,13 +256,41 @@ class CargasMasivasViewSet(viewsets.ViewSet):
         
     @action(detail=False, methods=['post'], url_path='cancelaciones')
     def cargar_cancelaciones(self, request):
-        archivo = request.FILES.get('file')
-        if not archivo:
-            return Response({'detail': 'No se envió ningún archivo.'}, status=400)
+        errores = []
         try:
-            cargador = loadCancelaciones(archivo)
-            cargador.load_cancelaciones()
-            return Response({'detail': 'Cancelaciones cargadas exitosamente.'}, status=200)
+            archivo = request.FILES.get('file')
+            
+            # Validaciones del archivo
+            errores = self.validaciones_iniciales(archivo)
+            if errores:
+                return Response({
+                    'errores': errores,
+                }, status=status.HTTP_400_BAD_REQUEST)
+            try:
+                cargador = loadCancelaciones(archivo)
+            except Exception as e:
+                errores.append({
+                    'codigo_error': '0004',
+                    'tipo_error': 'ERROR_INICIALIZACION',
+                    'detalle': f'Error al inicializar el cargador de cancelaciones: {str(e)} \n Asegúrese de que el archivo tenga el formato correcto y contenga las hojas necesarias.',
+                })
+                return Response({
+                    'errores': errores,
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+            resultado = cargador.load_cancelaciones()
+
+            if resultado.get('exitoso', False):
+                return Response(resultado, status=status.HTTP_200_OK)
+            else:
+                return Response(resultado, status=status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            print(e)
-            return Response({'detail': str(e)}, status=500)
+            # Error no controlado
+            errores.append({
+                'codigo_error': '0005',
+                'tipo_error': 'ERROR_INESPERADO',
+                'detalle': f'Error inesperado al procesar el archivo: {str(e)}',
+            })
+            return Response({
+                'errores': errores,
+            }, status=status.HTTP_400_BAD_REQUEST)

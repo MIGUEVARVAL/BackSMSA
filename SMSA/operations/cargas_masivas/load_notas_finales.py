@@ -1,5 +1,5 @@
 import pandas as pd
-from SMSA.models import Estudiante, Asignatura, AsignaturaPlan, Tipologia, HistorialAcademico, PlanEstudio, UnidadAcademica
+from SMSA.models import Estudiante, Asignatura, HistorialAcademico, UnidadAcademica
 from django.db import transaction
 
 class loadNotasFinales:
@@ -91,7 +91,6 @@ class loadNotasFinales:
             
             # Filtrar las columnas relevantes
             df = self.df_notas_finales[required_columns].copy()
-            df = df.to_dict(orient='records')
 
             try:
                 # Crear una lista para las UAB
@@ -133,6 +132,7 @@ class loadNotasFinales:
     # Función parta crear o actualizar las asignaturas y sus notas finales
     def create_update_historial_academico(self, notas_finales, uab_dict):
 
+        estudiantes_no_encontrados = []
         historiales_creados = 0
         historiales_actualizados = 0
         historiales_procesados = 0
@@ -142,14 +142,17 @@ class loadNotasFinales:
             with transaction.atomic():
             
                 # Se consulta al estudiante por su documento
-                for nota in notas_finales:
+                for index, nota in notas_finales.iterrows():
                     try:
+                        if nota['DOCUMENTO'] in estudiantes_no_encontrados:
+                            continue
                         estudiante = Estudiante.objects.filter(documento=nota['DOCUMENTO']).first()
                         if not estudiante:
+                            estudiantes_no_encontrados.append(nota['DOCUMENTO'])
                             self.errores.append({
                                 'codigo_error': '0005',
                                 'tipo_error': 'ESTUDIANTE_NO_ENCONTRADO',
-                                'detalle': f'Estudiante no encontrado con documento: {nota["DOCUMENTO"]}'
+                                'detalle': f'Estudiante no encontrado con documento: {nota["DOCUMENTO"]} ubicado en la fila {self.fila_dato}'
                             })
                             continue  # Saltar a la siguiente nota si el estudiante no se encuentra
 
@@ -165,6 +168,12 @@ class loadNotasFinales:
                                 'uab': uab if uab else None,
                             }
                         )
+
+                        historial = HistorialAcademico.objects.filter(
+                            estudiante=estudiante,
+                            asignatura=asignatura,
+                            periodo=nota['PERIODO']
+                        ).first()
 
                         # Se crea o actualiza el historial académico
                         defaults = {
@@ -189,7 +198,6 @@ class loadNotasFinales:
                             print(f'Historial académico actualizado: {historial}')
 
                     except Exception as e:
-                        print(f'Error al procesar la nota final: {str(e)}')
                         self.errores.append({
                             'codigo_error': '0004',
                             'tipo_error': 'ERROR_PROCESAMIENTO_NOTA',
@@ -199,7 +207,7 @@ class loadNotasFinales:
             return {
                 'exitoso': True,
                 'errores': self.errores,
-                'mensajeExito': f'Registros académicos procesados: {historiales_procesados} de {len(notas_finales)}, creados: {historiales_creados}, actualizados: {historiales_actualizados}'
+                'mensajeExito': f'Registros académicos procesados: {historiales_procesados}, creados: {historiales_creados}, actualizados: {historiales_actualizados}'
             }
 
         except Exception as e:
