@@ -60,8 +60,6 @@ class loadCancelaciones:
                 'exitoso': False,
                 'errores': self.errores
             }
-        
-        print(self.df_cancelaciones.head())
 
         historiales_creados = 0
         historiales_actualizados = 0

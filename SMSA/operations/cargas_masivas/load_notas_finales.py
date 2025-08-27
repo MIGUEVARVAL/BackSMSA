@@ -132,6 +132,7 @@ class loadNotasFinales:
     # Función parta crear o actualizar las asignaturas y sus notas finales
     def create_update_historial_academico(self, notas_finales, uab_dict):
 
+
         estudiantes_no_encontrados = []
         historiales_creados = 0
         historiales_actualizados = 0
@@ -152,7 +153,7 @@ class loadNotasFinales:
                             self.errores.append({
                                 'codigo_error': '0005',
                                 'tipo_error': 'ESTUDIANTE_NO_ENCONTRADO',
-                                'detalle': f'Estudiante no encontrado con documento: {nota["DOCUMENTO"]} ubicado en la fila {self.fila_dato}'
+                                'detalle': f'Estudiante no encontrado con documento: {nota["DOCUMENTO"]} ubicado en la fila {self.fila_dato + index}'
                             })
                             continue  # Saltar a la siguiente nota si el estudiante no se encuentra
 
@@ -201,13 +202,13 @@ class loadNotasFinales:
                         self.errores.append({
                             'codigo_error': '0004',
                             'tipo_error': 'ERROR_PROCESAMIENTO_NOTA',
-                            'detalle': f'Error al procesar la fila {self.fila_dato} para el estudiante {nota["DOCUMENTO"]} con la asignatura {nota["ASIGNATURA"]}: {str(e)}'
+                            'detalle': f'Error al procesar la fila {self.fila_dato + index} para el estudiante {nota["DOCUMENTO"]} con la asignatura {nota["ASIGNATURA"]}: {str(e)}'
                         })
             
             return {
                 'exitoso': True,
                 'errores': self.errores,
-                'mensajeExito': f'Registros académicos procesados: {historiales_procesados}, creados: {historiales_creados}, actualizados: {historiales_actualizados}'
+                'mensajeExito': f'Registros académicos procesados correctamente: {historiales_procesados}, creados: {historiales_creados}, actualizados: {historiales_actualizados}'
             }
 
         except Exception as e:

@@ -3,6 +3,7 @@ from django.contrib.auth.models import User,AbstractUser
 
 class User(AbstractUser):
     cargo = models.CharField(max_length=100, blank=True, null=True)
+    dependencia = models.CharField(max_length=100, blank=True, null=True)
     nivel_permisos = models.IntegerField(default=0, blank=True, null=True)
 
     groups = models.ManyToManyField(
@@ -141,8 +142,6 @@ class AsignaturaPlan(models.Model):
     tipologia = models.ForeignKey(Tipologia, on_delete=models.PROTECT)
     asignatura = models.ForeignKey(Asignatura, on_delete=models.CASCADE)
     plan_estudio = models.ForeignKey(PlanEstudio, on_delete=models.SET_NULL, blank=True, null=True)
-    parametrizacion = models.BooleanField(default=True, blank=True, null=True)
-    fecha_modificacion = models.DateTimeField(auto_now=True, blank=True, null=True)
 
     def __str__(self):
         return f"{self.asignatura.nombre} - {self.plan_estudio.nombre} ({self.tipologia.nombre})"

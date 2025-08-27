@@ -3,6 +3,7 @@ from SMSA.serializers.estudiante_serializers import EstudianteSerializer
 from rest_framework import viewsets, permissions, status
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.pagination import PageNumberPagination
+from django.db import models
 
 class Pagination(PageNumberPagination):
     page_size = 40
@@ -55,8 +56,6 @@ class EstudianteViewSet(viewsets.ModelViewSet):
                 queryset = queryset.filter(activo=True)
             elif activo.lower() == 'false':
                 queryset = queryset.filter(activo=False)
-        else:
-            queryset = queryset.filter(activo=True)
         if matriculas:
             queryset = queryset.filter(numero_matriculas=matriculas)
         if papa_min:
@@ -74,9 +73,16 @@ class EstudianteViewSet(viewsets.ModelViewSet):
                 orderBy = f"-{orderBy}"  
             queryset = queryset.order_by(orderBy)
         else:
-            queryset = queryset.order_by('papa')  # Orden por defecto
-            queryset = queryset.order_by('-activo')  # Ordena primero los True (activos), luego los False (inactivos)
-        
+            # Ordena primero los estudiantes cuyo plan_estudio.tipo_nivel es 'PREGRADO', luego por activo y papa
+            queryset = queryset.order_by(
+                models.Case(
+                    models.When(plan_estudio__tipo_nivel='PREGRADO', then=0),
+                    default=1,
+                    output_field=models.IntegerField(),
+                ),
+                '-activo',
+                'papa'
+            )
 
         return queryset
     

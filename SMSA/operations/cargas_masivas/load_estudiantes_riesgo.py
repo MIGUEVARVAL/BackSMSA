@@ -59,7 +59,7 @@ class loadEstudiantesRiesgo:
         try:
 
             # Validar que el DataFrame se haya cargado correctamente
-            if not hasattr(self, 'df_estudiantes_activos') or self.df_estudiantes_activos is None:
+            if not hasattr(self, 'df_estudiantes_riesgo') or self.df_estudiantes_riesgo is None:
                 return {
                     'exitoso': False,
                     'errores': self.errores,
@@ -127,11 +127,11 @@ class loadEstudiantesRiesgo:
                         try:
 
                             # Validar datos requeridos
-                            if pd.isna(row['T_DOCUMENTO']) or pd.isna(row['DOCUMENTO']) or pd.isna(row['NOMBRES_LEGAL']):
+                            if pd.isna(row["TIPO DE DOCUMENTO"]) or pd.isna(row['DOCUMENTO']) or pd.isna(row['NOMBRE LEGAL ESTUDIANTE']):
                                 self.errores.append({
                                     'codigo_error': '0003',
                                     'tipo_error': 'DATO_REQUERIDO_FALTANTE',
-                                    'detalle': f'Faltan datos requeridos en la fila {index + self.fila_dato}: T_DOCUMENTO, DOCUMENTO o NOMBRES_LEGAL. Estudiante no cargado.',
+                                    'detalle': f'Faltan datos requeridos en la fila {index + self.fila_dato}: TIPO DE DOCUMENTO, DOCUMENTO o NOMBRE LEGAL ESTUDIANTE. Estudiante no cargado.',
                                 })
                                 continue
 

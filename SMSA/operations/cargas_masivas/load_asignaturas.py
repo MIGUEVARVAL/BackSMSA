@@ -68,7 +68,7 @@ class loadAsignaturas:
             
             # Validar columnas requeridas
             required_columns_plan = ['COD_ASIGNATURA', 'COD_PLAN', 'COD_TIPOLOGIA', 'TIPOLOGIA', 'PERIDO DE OFERTA']
-            required_columns_asignatura = ['COD_FACULTAD', 'FACULTAD', 'COD_UAB', 'UAB', 'COD_ASIGNATURA', 'ASIGNATURA', 'CREDITOS', 'PERIODO', 'NUM_SEMANAS', 'HORAS_TEORICAS', 'HORAS_PRACTICAS', 'MININANSISTENCIA', 'ASIG_VALIDABLE']
+            required_columns_asignatura = ['COD_FACULTAD', 'FACULTAD', 'COD_UAB', 'UAB', 'COD_ASIGNATURA', 'ASIGNATURA', 'CREDITOS', 'NUM_SEMANAS', 'HORAS_TEORICAS', 'HORAS_PRACTICAS', 'MININANSISTENCIA', 'ASIG_VALIDABLE']
             missing_columns_plan = [col for col in required_columns_plan if col not in self.df_asignaturas_plan.columns]
             missing_columns_asignatura = [col for col in required_columns_asignatura if col not in self.df_asignaturas.columns]
 
@@ -410,8 +410,7 @@ class loadAsignaturas:
                             'horas_teoricas': asignatura['HORAS_TEORICAS'],
                             'horas_practicas': asignatura['HORAS_PRACTICAS'],
                             'asistencia_minima': asignatura['MININANSISTENCIA'],
-                            'validable': asignatura['ASIG_VALIDABLE'],
-                            'periodo': asignatura['PERIODO']
+                            'validable': asignatura['ASIG_VALIDABLE']
                         }
 
                         # Mejorar la conversión de NaN a None
@@ -501,7 +500,6 @@ class loadAsignaturas:
         """Verifica si la asignatura necesita actualización"""
         campos_comparar = [
             ('uab', uab_obj),
-            ('periodo', datos_nuevos['PERIODO']),
             ('numero_semanas', datos_nuevos['NUM_SEMANAS']),
             ('horas_teoricas', datos_nuevos['HORAS_TEORICAS']),
             ('horas_practicas', datos_nuevos['HORAS_PRACTICAS']),
@@ -532,7 +530,7 @@ class loadAsignaturas:
                 self.errores.append({
                     'codigo_error': '0006',
                     'tipo_error': 'ERROR_COMPARACION_CAMPOS',
-                    'detalle': f'Error al comparar el campo {campo} para la asignatura con código {obj.codigo}. El campo no existe en el modelo Asignatura.',
+                    'detalle': f'Error al comparar el campo "{campo}" para la asignatura con código {obj.codigo}. El campo no existe en el modelo Asignatura.',
                 })
             except Exception as e:
                 self.errores.append({

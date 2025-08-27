@@ -16,6 +16,7 @@ class CargasMasivasViewSet(viewsets.ViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def validaciones_iniciales(self, archivo):
+        
         errores = []
         
         if not archivo:
@@ -23,14 +24,6 @@ class CargasMasivasViewSet(viewsets.ViewSet):
                 'codigo_error': '0001',
                 'tipo_error': 'ARCHIVO_FALTANTE',
                 'detalle': 'No se envió ningún archivo',
-            })
-
-        # Validar tamaño del archivo (ejemplo: máximo 10MB)
-        if archivo.size > 10 * 1024 * 1024:  # 10MB
-            errores.append({
-                'codigo_error': '0002',
-                'tipo_error': 'ARCHIVO_MUY_GRANDE',
-                'detalle': 'El archivo es demasiado grande (>10MB), el archivo compartido tiene un tamaño de {size} bytes'.format(size=archivo.size),
             })
 
         # Validar tipo de archivo
